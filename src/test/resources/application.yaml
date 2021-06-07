@@ -1,0 +1,16 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - uri: https://httpbin.org
+          predicates:
+            - Path=/get/**
+            - UrlContains=its-me
+          filters:
+            - StripPrefix=0
+        - uri: https://httpbin.org
+          predicates:
+            - Path=/get/**
+          filters:
+            - StripPrefix=0
+            - CustomHeader
