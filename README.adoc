@@ -1,1 +1,112 @@
-=
+= Custom SCG-K8s examples
+
+Contains:
+
+* Filter: `CustomHeaderGatewayFilterFactory`
+* Peedicate: `CustomHeaderGatewayFilterFactory`
+
+== Testing
+
+Project is a normal Gradle project.
+
+ ./gradlew test
+
+== Building
+
+To generate a package with only required classes.
+
+ ./gradlew jar
+
+== Deploying
+
+ k create namespace user-namespace; \
+ GATEWAY_NAMESPACE=user-namespace && \
+ kubectl create configmap my-extension --from-file=build/libs/scg-extensions-0.0.1-SNAPSHOT.jar -n ${GATEWAY_NAMESPACE}
+
+== Demo
+
+Create a SCG-for-K8s, RouteConfig and Mapping.
+
+NOTE: Evaluation is ordered.
+
+----
+kubectl apply -f - <<EOF
+---
+apiVersion: "tanzu.vmware.com/v1"
+kind: SpringCloudGateway
+metadata:
+  name: my-gateway
+spec:
+  extensions:
+    - scg-extensions
+---
+EOF
+
+kubectl apply -f - <<EOF
+---
+apiVersion: "tanzu.vmware.com/v1"
+kind: SpringCloudGatewayRouteConfig
+metadata:
+  name: my-gateway-routes
+spec:
+  routes:
+  - uri: https://httpbin.org
+    predicates:
+      - Path=/get/**
+      - UrlContains=its-me
+    filters:
+      - StripPrefix=1
+  - uri: https://httpbin.org
+    predicates:
+      - Path=/get/**
+    filters:
+      - StripPrefix=1
+      - CustomHeader
+---
+apiVersion: "tanzu.vmware.com/v1"
+kind: SpringCloudGatewayMapping
+metadata:
+  name: my-gateway-mapping
+spec:
+  gatewayRef:
+    name: my-gateway
+  routeConfigRef:
+    name: my-gateway-routes
+---
+EOF
+----
+
+Check that routes are applied:
+ http://localhost:8090/actuator/gateway/routes
+
+http://localhost:8080/get
+
+== Troubleshooting
+
+=== Invalid extension name
+
+In case the ConfigMap is not found, extension configuration will be ignored but SCG will start.
+Search events with type `InvalidExtensionException`.
+
+ k describe scg my-gateway
+
+----
+Events:
+  Type     Reason                     Age        From                          Message
+  ----     ------                     ----       ----                          -------
+  Normal   Created                    <unknown>  SpringCloudGatewayController  ImagePullSecret specified in SpringCloudGatewayRouteConfig "my-gateway" is Created on pod "null/spring-cloud-gateway-image-pull-secret"
+  Warning  InvalidExtensionException  <unknown>  SpringCloudGatewayController  ConfigMap 'scg-extensions2' not found. Skipping configuration.
+----
+
+After fixing it, we need to recreate the SCG with the proper configuration.
+For that delete `k delete scg my-gateway` and create again.
+
+=== Invalid Filter or Predicate Name
+
+This won't allow the configuration of the routes in the Gateway instance because the route are not valid.
+This is reflected with error 400 when checking the operator logs
+
+```
+com.vmware.tanzu.springcloudgateway.routeconfig.PodUpdateException: Pod update failed, request to http://10.244.0.13:8090/actuator/gateway/routes/default-my-gateway-mapping-0 failed. Response code 400, message Bad Request
+```
+
