@@ -3,7 +3,7 @@
 Contains:
 
 * Filter: `CustomHeaderGatewayFilterFactory`
-* Peedicate: `CustomHeaderGatewayFilterFactory`
+* Predicate: `CustomHeaderGatewayFilterFactory`
 
 == Testing
 
@@ -13,19 +13,26 @@ Project is a normal Gradle project.
 
 == Building
 
-To generate a package with only required classes.
+To generate a package(s) with only required classes.
 
  ./gradlew jar
 
-== Deploying
+Packages are located in:
 
- k create namespace user-namespace; \
- GATEWAY_NAMESPACE=user-namespace && \
- kubectl create configmap my-extension --from-file=build/libs/scg-extensions-0.0.1-SNAPSHOT.jar -n ${GATEWAY_NAMESPACE}
+* extensions/build/libs/extensions-0.0.1-SNAPSHOT.jar
+* header-encoder/build/libs/header-encoder-0.0.1-SNAPSHOT.jar
 
-== Demo
+== Demo (single extension jar)
 
-Create a SCG-for-K8s, RouteConfig and Mapping.
+. (Optional) Create a namespace
+
+ kubectl create namespace extensions-namespace
+
+. Create a ConfigMap with only the extensions jar.
+
+ kubectl create configmap scg-extensions --from-file=extensions/build/libs/extensions-0.0.1-SNAPSHOT.jar -n extensions-namespace
+
+. Create a SCG-for-K8s, RouteConfig and Mapping.
 
 NOTE: Evaluation is ordered.
 
@@ -55,12 +62,12 @@ spec:
       - Path=/get/**
       - UrlContains=its-me
     filters:
-      - StripPrefix=1
+      - StripPrefix=0
   - uri: https://httpbin.org
     predicates:
       - Path=/get/**
     filters:
-      - StripPrefix=1
+      - StripPrefix=0
       - CustomHeader
 ---
 apiVersion: "tanzu.vmware.com/v1"
@@ -79,7 +86,14 @@ EOF
 Check that routes are applied:
  http://localhost:8090/actuator/gateway/routes
 
-http://localhost:8080/get
+Browse to http://localhost:8080/get to validate the extension is being applied.
+
+== Demo (multiple extension jar)
+
+ kubectl create configmap scg-extensions \
+  --from-file=extensions/build/libs/extensions-0.0.1-SNAPSHOT.jar \
+  --from-file=header-encoder/build/libs/header-encoder-0.0.1-SNAPSHOT.jar \
+  -n extensions-namespace
 
 == Troubleshooting
 

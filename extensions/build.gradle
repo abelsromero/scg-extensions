@@ -23,11 +23,11 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-security"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
     implementation "org.springframework.session:spring-session-core"
-    testImplementation "org.springframework.boot:spring-boot-starter-test"
-    testImplementation "org.springframework.security:spring-security-test"
+    implementation project(':header-encoder')
 
     testImplementation platform("org.springframework.boot:spring-boot-dependencies:${springBootVersion}")
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    testImplementation "org.springframework.security:spring-security-test"
     implementation "io.projectreactor.tools:blockhound:${blockhoundVerson}"
 }
 

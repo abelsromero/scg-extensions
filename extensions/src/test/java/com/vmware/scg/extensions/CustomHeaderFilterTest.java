@@ -43,7 +43,7 @@ class CustomHeaderFilterTest {
 				.expectStatus()
 				.isOk()
 				.expectHeader()
-				.valuesMatch("X-My-Header", "Created-on-.+");
+				.valuesMatch("X-My-Header", "SGVsbG8gd29ybGQh", "Created-on-.+");
 	}
 
 	@SpringBootApplication
