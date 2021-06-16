@@ -3,12 +3,12 @@ package com.vmware.scg.extensions;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
+import my.extension.encoder.HeaderEncoder;
 
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
 
 @Component
 public class CustomHeaderGatewayFilterFactory extends AbstractGatewayFilterFactory<Object> {
@@ -31,7 +31,10 @@ public class CustomHeaderGatewayFilterFactory extends AbstractGatewayFilterFacto
 
 			exchange.getResponse()
 					.getHeaders()
-					.put("X-My-Header", List.of("Created-on-" + LocalDateTime.now()));
+					.put("X-My-Header", List.of(
+							new HeaderEncoder().encode("Hello world!"),
+							"Created-on-" + LocalDateTime.now()
+					));
 			return chain.filter(exchange);
 		};
 	}

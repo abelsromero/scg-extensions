@@ -1,1 +1,4 @@
 rootProject.name = 'scg-extensions'
+
+include 'extensions'
+include 'header-encoder'
