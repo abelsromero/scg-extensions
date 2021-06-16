@@ -3,6 +3,7 @@ package com.vmware.scg.extensions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import reactor.blockhound.BlockHound;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -32,6 +33,9 @@ class CustomHeaderFilterTest {
 
 	@Test
 	void should_apply_extension_filter() {
+
+		BlockHound.install();
+
 		webTestClient
 				.get()
 				.uri("/get")
