@@ -1,49 +1,59 @@
 package com.vmware.scg.extensions;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.matching.EqualToPattern;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import reactor.blockhound.BlockHound;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.ok;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureWebTestClient
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CustomHeaderFilterTest {
 
-	@LocalServerPort
-	int gatewayPort;
+	final WireMockServer wireMock = new WireMockServer(9090);
 
+	@Autowired
 	WebTestClient webTestClient;
 
 	@BeforeAll
 	void setUp() {
-		this.webTestClient = WebTestClient
-				.bindToServer()
-				.baseUrl("http://localhost:" + gatewayPort)
-				.build();
+		wireMock.stubFor(get("/add-header").willReturn(ok()));
+		wireMock.start();
+	}
+
+	@AfterAll
+	void tearDown() {
+		wireMock.stop();
 	}
 
 	@Test
 	void should_apply_extension_filter() {
-
-		BlockHound.install();
-
 		webTestClient
 				.get()
-				.uri("/get")
+				.uri("/add-header")
 				.exchange()
 				.expectStatus()
-				.isOk()
-				.expectHeader()
-				.valuesMatch("X-My-Header", "SGVsbG8gd29ybGQh", "Created-on-.+");
+				.isOk();
+
+		wireMock.verify(getRequestedFor(urlPathEqualTo("/add-header"))
+				.withHeader("X-My-Header", new EqualToPattern("SGVsbG8gd29ybGQh")));
 	}
 
 	@SpringBootApplication

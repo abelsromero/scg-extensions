@@ -11,7 +11,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
 @Component
-public class CustomHeaderGatewayFilterFactory extends AbstractGatewayFilterFactory<Object> {
+public class CustomHeaderGatewayFilterFactory
+		extends AbstractGatewayFilterFactory<Object> {
+
+	private static final String MY_HEADER_KEY = "X-My-Header";
 
 	@Override
 	public GatewayFilter apply(Object config) {
@@ -29,13 +32,18 @@ public class CustomHeaderGatewayFilterFactory extends AbstractGatewayFilterFacto
 //				})
 //				.block();
 
-			exchange.getResponse()
-					.getHeaders()
-					.put("X-My-Header", List.of(
-							new HeaderEncoder().encode("Hello world!"),
-							"Created-on-" + LocalDateTime.now()
-					));
-			return chain.filter(exchange);
+			ServerWebExchange updatedExchange
+					= exchange.mutate()
+							  .request(request -> {
+								  request.headers(headers -> {
+									  headers.put(MY_HEADER_KEY, List.of(
+											  new HeaderEncoder().encode("Hello world!"),
+											  "Created-on-" + LocalDateTime.now()));
+								  });
+							  })
+							  .build();
+
+			return chain.filter(updatedExchange);
 		};
 	}
 }

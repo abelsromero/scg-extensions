@@ -2,15 +2,15 @@ spring:
   cloud:
     gateway:
       routes:
-        - uri: https://httpbin.org
+        - uri: http://localhost:9090
           predicates:
-            - Path=/get/**
+            - Path=/contains/**
             - UrlContains=its-me
           filters:
             - StripPrefix=0
-        - uri: https://httpbin.org
+        - uri: http://localhost:9090
           predicates:
-            - Path=/get/**
+            - Path=/add-header/**
           filters:
             - StripPrefix=0
             - CustomHeader

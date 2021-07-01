@@ -3,7 +3,8 @@
 Contains:
 
 * Filter: `CustomHeaderGatewayFilterFactory`
-* Predicate: `CustomHeaderGatewayFilterFactory`
+* Predicate: `UrlContainsRoutePredicateFactory`
+* Predicate: `MyGlobalFilter`
 
 == Testing
 
